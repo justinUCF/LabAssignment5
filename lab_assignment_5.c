@@ -7,44 +7,48 @@ typedef struct node {
 } node;
 
 // Returns number of nodes in the linkedList.
-int length(node* head)
-{
-	node* current = head;
-	int length = 0;
-	while(current != NULL){
-		length++;
-		current = current->next;
-	}
-	return length;
+int length(node* head) {
+	// TODO:
+	// this is a common pattern to traverse a linked list
+	// but it's O(n) time complexity. We could add a length
+	// member to the linked list struct and update it every time 
+	// we add or remove a node. This way we can get the length
+	// in O(1) time.
+    int length = 0;
+    while (head != NULL) {
+        length++;
+        head = head->next;
+    }
+    return length;
 }
+
 
 // parses the string in the linkedList
-//  if the linked list is head -> |a|->|b|->|c|
-//  then toCString function wil return "abc"
-char* toCString(node* head)
-{
-	node* current = head;
-	int size = length(head);
-	int index = 0;
+// if the linked list is head -> |a|->|b|->|c|
+// then toCString function wil return "abc"
+char* toCString(node* head) {
+    int len = length(head);
+    char* str = malloc(len + 1);
+    if (str == NULL) return NULL;
 
-	char* str = (char*)malloc(sizeof(char)*(size+1));
-	if (str == NULL) return NULL;
-
-	while (current != NULL){
-		str[index] = current->letter;
-		index++;
-		current=current->next;
-	}
-	str[size] = '\0';
-	return str;
+    for (int i = 0; head != NULL; head = head->next, i++) {
+        str[i] = head->letter;
+    }
+    str[len] = '\0';
+    return str;
 }
 
-// inserts character to the linkedlist
+// appends character to the linkedlist
 // f the linked list is head -> |a|->|b|->|c|
 // then insertChar(&head, 'x') will update the linked list as foolows:
 // head -> |a|->|b|->|c|->|x|
 void insertChar(node** pHead, char c)
 {
+	// Traversing the linked list every time to add a new node
+	// is not efficient. A common optimization is to keep a pointer to the
+	// last node in the linked list. This way we can add a new node
+	// in O(1) time. This is called a tail pointer.
+	// I'll leave it to you to implement this optimization.
 	node* newNode = (node*)malloc(sizeof(node));
 	if (newNode == NULL) return;
 	newNode->letter = c;
@@ -55,7 +59,10 @@ void insertChar(node** pHead, char c)
 	}
 	else{
 		node *current = *pHead;
-		while(current->next != NULL && current != NULL){
+		// don't need to check  `current != NULL`
+		// as the if next is NULL then it will break the loop
+		// and the newNode will be added to the end of the list
+		while(current->next != NULL){
 			current = current->next;
 		}
 		current->next = newNode;
@@ -63,49 +70,54 @@ void insertChar(node** pHead, char c)
 }
 
 // deletes all nodes in the linkedList.
-void deleteList(node** pHead)
-{
-	node* todelete = *pHead;
-	while(*pHead != NULL){
-		todelete = *pHead;
-		*pHead = (*pHead)->next;
-		free(todelete);
-	}
-	return;
-
+void deleteList(node** pHead) {
+    while (*pHead != NULL) {
+        node* todelete = *pHead;
+        *pHead = (*pHead)->next;
+        free(todelete);
+    }
 }
 
-int main(void)
-{
-	int i, strLen, numInputs;
-	node* head = NULL;
-	char* str;
-	char c;
-	FILE* inFile = fopen("input.txt","r");
+int main(void) {
+    node* head = NULL;
+    FILE* inFile = fopen("input.txt", "r");
+	// Check if file is opened successfully
+    if (inFile == NULL) {
+		// Good practice use perror to print error message
+		// It'll print the error message to stderr along with the 
+		// error code
+        perror("Error opening file");
+		// return error codes
+        return EXIT_FAILURE;
+    }
 
-	fscanf(inFile, " %d\n", &numInputs);
-	
-	while (numInputs-- > 0)
-	{
-		fscanf(inFile, " %d\n", &strLen);
-		for (i = 0; i < strLen; i++)
-		{
-			fscanf(inFile," %c", &c);
-			insertChar(&head, c);
-		}
+    int numInputs;
+    fscanf(inFile, "%d", &numInputs);
 
-		str = toCString(head);
-		printf("String is : %s\n", str);
+    while (numInputs-- > 0) {
+        int strLen;
+        fscanf(inFile, "%d", &strLen);
 
-		free(str);
-		deleteList(&head);
+        for (int i = 0; i < strLen; i++) {
+            char c;
+            fscanf(inFile, " %c", &c);
+            insertChar(&head, c);
+        }
 
+        char* str = toCString(head);
+        if (str != NULL) {
+            printf("String is: %s\n", str);
+            free(str);
+        }
+
+        deleteList(&head);
 		if (head != NULL)
 		{
-			printf("deleteList is not correct!");
+			perror("Error deleting list");
 			break;
 		}
-	}
+    }
 
-	fclose(inFile);
+    fclose(inFile);
+    return EXIT_SUCCESS;
 }
